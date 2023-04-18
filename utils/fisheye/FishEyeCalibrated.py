@@ -15,6 +15,7 @@ class FishEyeCameraCalibrated:
         self.img_center = np.array([self.intrinsic[0][2], self.intrinsic[1][2]])
         self.use_gpu = use_gpu
         # self.img_center = np.array([self.img_size[0] / 2, self.img_size[1] / 2])
+        self.fisheye_affine = np.array(calibration_data['affine'])
 
     def camera2world(self, point: np.ndarray, depth: np.ndarray):
         """
@@ -120,6 +121,59 @@ class FishEyeCameraCalibrated:
             raise Exception("norm is zero!")
 
         return np.asarray(point2D).T
+    
+
+    def world2cam_valid(self, point3D):
+        # in case of point3D = list([x,y,z])
+        if isinstance(point3D, list):
+            point3D = np.array(point3D)
+        if point3D.ndim == 1:
+            point3D = point3D[:, np.newaxis]
+        assert point3D.shape[0] == 3
+
+        # return value
+        point2D = np.zeros((2, point3D.shape[1]), dtype=np.float32)
+
+        norm = np.sqrt(point3D[0] * point3D[0] + point3D[1] * point3D[1])
+        valid_flag = (norm != 0)
+
+        # optical center
+        xc, yc = self.img_center[0], self.img_center[1]
+        point2D[0][~valid_flag] = yc
+        point2D[1][~valid_flag] = xc
+        # point = (0, 0, 0)
+        zero_flag = (point3D == 0).all(axis=0)
+        point2D[0][zero_flag] = -1
+        point2D[1][zero_flag] = -1
+
+        # else
+        theta = -np.arctan(point3D[2][valid_flag] / norm[valid_flag])
+        invnorm = 1 / norm[valid_flag]
+        for (i, element) in enumerate(self.fisheye_inverse_polynomial):
+            if i == 0:
+                rho = np.full_like(theta, element)
+                tmp_theta = theta.copy()
+            else:
+                rho += element * tmp_theta
+                tmp_theta *= theta
+
+        u = point3D[0][valid_flag] * invnorm * rho
+        v = point3D[1][valid_flag] * invnorm * rho
+        point2D_valid_0 = v * self.fisheye_affine[2] + u + yc
+        point2D_valid_1 = v * self.fisheye_affine[0] + u * self.fisheye_affine[1] + xc
+
+        # if self._fov < 360:
+        #     # finally deal with points are outside of fov
+        #     thresh_theta = np.deg2rad(self._fov / 2) - np.pi / 2
+        #     # set flag when  or point3D == (0, 0, 0)
+        #     outside_flag = theta > thresh_theta
+        #     point2D_valid_0[outside_flag] = -1
+        #     point2D_valid_1[outside_flag] = -1
+
+        point2D[0][valid_flag] = point2D_valid_0
+        point2D[1][valid_flag] = point2D_valid_1
+        return point2D    
+
 
     def world2camera_with_depth(self, point3D):
         point3D_cloned = deepcopy(point3D)

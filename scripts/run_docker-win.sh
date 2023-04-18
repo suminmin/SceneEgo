@@ -5,7 +5,8 @@ DIRNAME=`echo $PWD | awk -F "/" '{ print $NF }'`
 
 MEM=8G
 
-IMAGE="nvcr.io/nvidia/pytorch:21.03-py3"
+# IMAGE="nvcr.io/nvidia/pytorch:21.03-py3"
+IMAGE="nvcr.io/nvidia/pytorch:21.10-py3"
 
 DISPLAY=:0
 
