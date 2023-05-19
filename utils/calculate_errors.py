@@ -1,8 +1,8 @@
 import numpy as np
-
-from utils_proj.rigid_transform_with_scale import umeyama
-from utils_proj.skeleton import Skeleton
 from copy import deepcopy
+
+from utils.rigid_transform_with_scale import umeyama
+from utils.skeleton import Skeleton
 
 
 def global_align_skeleton_seq(estimated_seq, gt_seq):

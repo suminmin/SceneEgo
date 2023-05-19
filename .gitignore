@@ -1,3 +1,8 @@
+data/SceneEgo_test
+notebooks/render_img
+notebooks/render_img_predWithGTdepth
+
+
 .idea
 
 

@@ -40,7 +40,7 @@ class FishEyeCameraCalibrated:
         point: np.ndarray of 2D points on image (n * 2)
         depth: np.ndarray of depth of every 2D points (n)
         """
-        point_centered = point.astype(np.float) - self.img_center
+        point_centered = point.astype(np.float32) - self.img_center
         x = point_centered[:, 0]
         y = point_centered[:, 1]
         distance_from_center = np.sqrt(np.square(x) + np.square(y))
